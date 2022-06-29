@@ -1,0 +1,1 @@
+rqt_plot /rexrov2/thrusters/0/input /rexrov2/thrusters/1/input /rexrov2/thrusters/2/input /rexrov2/thrusters/3/input /rexrov2/thrusters/4/input /rexrov2/thrusters/5/input

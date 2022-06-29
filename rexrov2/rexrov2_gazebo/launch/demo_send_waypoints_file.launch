@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find uuv_control_utils)/launch/send_waypoints_file.launch">
+    <arg name="uuv_name" value="rexrov2"/>
+    <arg name="filename" value="$(find rexrov2_gazebo)/config/waypoint_set.yaml"/>
+    <arg name="interpolator" value="lipb"/>
+  </include>
+</launch>

@@ -1,0 +1,34 @@
+
+<launch>
+    <arg name="uuv_name" default="rexrov2" doc="Namespace of the vehicle to be controller"/>
+   
+    <arg name="gui_on" default="true" doc="Start Gazebo client and RViz"/>
+    <arg name="use_ned_frame" default="false" doc="If true, the reference frame is set to be NED (North-East-Down) instead of Gazebo's default ENU (East-North-Up)"/>
+
+    <arg name="Kp" default="11993.888,11993.888,11993.888,19460.069,19460.069,19460.069" doc="Coefficients for the $K_p$ diagonal matrix"/>
+    <arg name="Kd" default="9077.459,9077.459,9077.459,18880.925,18880.925,18880.925" doc="Coefficients for the $K_d$ diagonal matrix"/>
+    <arg name="Ki" default="321.417,321.417,321.417,2096.951,2096.951,2096.951" doc="Coefficients for the $K_i$ diagonal matrix"/>
+
+    <!-- Thruster manager configuration -->
+    <arg name="thruster_manager_output_dir" default="$(find rexrov2_control)/config" doc="Output directory for the generated thruster manager"/>
+    <arg name="thruster_manager_config_file" default="$(find rexrov2_control)/config/thruster_manager.yaml" doc="File storing the configuration of the thruster manager"/>
+    <arg name="tam_file" default="$(find rexrov2_control)/config/TAM.yaml" doc="File storing the thruster allocation matrix"/>
+
+    <include file="$(find uuv_trajectory_control)/launch/rov_pid_controller_rl.launch">
+      <arg name="uuv_name" value="$(arg uuv_name)"/>
+      <arg name="gui_on" value="$(arg gui_on)"/>
+      <arg name="saturation" value="2000"/>
+      <arg name="Kp" value="$(arg Kp)"/>
+      <arg name="Kd" value="$(arg Kd)"/>
+      <arg name="Ki" value="$(arg Ki)"/>
+      <arg name="use_ned_frame" value="$(arg use_ned_frame)"/>
+      <arg name="thruster_manager_output_dir" value="$(arg thruster_manager_output_dir)"/>
+      <arg name="thruster_manager_config_file" value="$(arg thruster_manager_config_file)"/>
+      <arg name="tam_file" value="$(arg tam_file)"/>
+    </include>
+
+    <group if="$(arg gui_on)">
+      <!-- Start RViz  -->
+      <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find rexrov2_control)/rviz/rexrov2_control.rviz"/>
+    </group>
+</launch>

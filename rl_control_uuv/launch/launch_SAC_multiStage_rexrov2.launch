@@ -1,0 +1,126 @@
+<launch>
+  <arg name="uuv_name" default="rexrov2"/>
+  <arg name="record" default="false" doc="Set this flag to true to call record.launch"/>
+  <arg name="bag_filename" default="recording.bag" doc="Name of the output ROS bag file in case record is set to true"/>
+  <arg name="use_ned_frame" default="false" doc="If true, uses the NED (North-East-Down) frame conversion. If false, ENU (East-North-Up) will be used per default."/>
+
+  <arg name="teleop_on" default="false" doc="If true, the teleop node will be started"/>
+  <arg name="joy_id" default="0" doc="Joystick ID"/>
+  <arg name="gui_on" default="false" doc="Start Gazebo client and RViz"/>
+
+  <arg name="max_forward_speed" default="2"/>
+  <arg name="min_thrust" default="0"/>
+  <arg name="max_thrust" default="120"/>
+  <arg name="n_fins" default="4"/>
+  <arg name="max_fin_angle" default="1.396263402"/>
+
+  <!-- Thruster configuration -->
+  <arg name="thruster_topic" default="thrusters/0/input"/>
+  <arg name="thruster_topic_prefix" default="thrusters" />
+  <arg name="thruster_topic_suffix" default="input" />
+  <arg name="thruster_frame_base" default="thruster_" />
+  <arg name="thruster_conversion_fcn" default="proportional" />
+  <!-- For proportional thruster model: gain * rotor_ang_vel * |rotor_ang_vel| -->
+  <arg name="thruster_gain" default="0.000049"/>
+
+  <arg name="fin_topic_prefix" default="fins"/>
+  <arg name="fin_topic_suffix" default="input"/>
+
+  <rosparam>
+    stage_number: 1
+  </rosparam>
+
+
+  <arg name="comparison_mode" default="false"/>
+
+<!--
+  <include file="$(find uuv_gazebo_worlds)/launch/ocean_waves.launch"/>
+
+  <include file="$(find uuv_simulation_wrapper)/launch/unpause_simulation.launch">
+    <arg name="timeout" value="5"/>
+  </include>
+
+  <include file="$(find rexrov2_description)/launch/upload_rexrov2.launch">
+        <arg name="use_ned_frame" value="$(arg use_ned_frame)"/>
+  </include>
+-->
+
+
+ <group if="$(arg comparison_mode)">
+  <include file="$(find rexrov2_control)/launch/start_pid_controller_rl.launch">
+        <arg name="gui_on" value="$(arg gui_on)"/>
+        <arg name="use_ned_frame" value="$(arg use_ned_frame)"/>
+  </include>
+ </group>
+
+  <group ns="$(arg uuv_name)">
+    <node pkg="rl_control_uuv"
+          type="mainRexRov.py"
+          name="mainRexRov"
+          output="screen"
+          unless="$(arg use_ned_frame)">
+      <remap from="odom" to="pose_gt"/>
+      <rosparam subst_value="true">
+          comparison_mode: $(arg comparison_mode)
+          max_forward_speed: $(arg max_forward_speed)
+          base_link: base_link
+          is_underactuated: true
+          inertial_frame_id: world
+          min_thrust: $(arg min_thrust)
+          max_thrust: $(arg max_thrust)
+          thruster_topic: $(arg thruster_topic)
+          n_fins: $(arg n_fins)
+          fin_topic_prefix: $(arg fin_topic_prefix)
+          fin_topic_suffix: $(arg fin_topic_suffix)
+          max_fin_angle: $(arg max_fin_angle)
+          thruster_config:
+              topic_prefix: $(arg thruster_topic_prefix)
+              topic_suffix: $(arg thruster_topic_suffix)
+              frame_base: $(arg thruster_frame_base)
+              max_thrust: $(arg max_thrust)
+              conversion_fcn: $(arg thruster_conversion_fcn)
+              conversion_fcn_params:
+                  gain: $(arg thruster_gain)
+      </rosparam>
+    </node>
+
+    <node pkg="rl_control_uuv"
+          type="mainRexRov.py"
+          name="mainRexRov"
+          output="screen"
+          if="$(arg use_ned_frame)">
+      <remap from="odom" to="pose_gt_ned"/>
+      <rosparam subst_value="true">
+          comparison_mode: $(arg comparison_mode)
+          max_forward_speed: $(arg max_forward_speed)
+          base_link: base_link_ned
+          is_underactuated: true
+          inertial_frame_id: world_ned
+          min_thrust: $(arg min_thrust)
+          max_thrust: $(arg max_thrust)
+          thruster_topic: $(arg thruster_topic)
+          n_fins: $(arg n_fins)
+          fin_topic_prefix: $(arg fin_topic_prefix)
+          fin_topic_suffix: $(arg fin_topic_suffix)
+          max_fin_angle: $(arg max_fin_angle)
+          thruster_config:
+              topic_prefix: $(arg thruster_topic_prefix)
+              topic_suffix: $(arg thruster_topic_suffix)
+              frame_base: $(arg thruster_frame_base)
+              max_thrust: $(arg max_thrust)
+              conversion_fcn: $(arg thruster_conversion_fcn)
+              conversion_fcn_params:
+                  gain: $(arg thruster_gain)
+      </rosparam>
+    </node>
+  </group>
+
+
+
+
+  <include file="$(find rexrov2_gazebo)/launch/record.launch">
+      <arg name="record" value="$(arg record)"/>
+      <arg name="bag_filename" value="$(arg bag_filename)"/>
+  </include>
+
+</launch>

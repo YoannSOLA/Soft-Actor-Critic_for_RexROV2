@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="liste_robots" default="[taz01]" />
+  <arg name="command_use_gt" default="true" />
+  <arg name="world_name" default="empty" />
+  <arg name="start_gazebo" default="true" />
+  <arg name="perception" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="verbose" value="false" />
+  <arg name="use_sim_time" default="true"/>
+  <arg name="headless" value="true"/>
+  <arg name="range_max" value="3.0" />
+  
+  <arg name="stage" default="1"/>
+  <param name="stage_number" value="$(arg stage)"/>
+  <param name="capability_group" value="simulator"/>
+  
+  <param name="frame_id" type="string" value="world"/>
+  <remap from="cloud_in" to="/firefly/vi_sensor/camera_depth/depth/points" />
+  
+  <include file="$(find gazebo_ros)/launch/empty_world.launch" if="$(arg start_gazebo)">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="use_sim_time" default="$(arg gui)"/>
+    <arg name="paused" value="false" />
+  </include>
+  
+  <!-- nodelet to transform dynamically gazebo joint msgs in separate odoms -->
+  <node pkg="ground_truth_manager" type="ground_truth_manager" name="ground_truth_manager" > </node>
+
+<group if="$(eval 'taz01' in arg('liste_robots'))">
+
+  <include file="$(find copernic_gazebo)/launch/wifibot/spawn_wifibot.launch">
+  <arg name="robot_name" value="taz01"/>
+  </include>
+  
+  <include file="$(find copernic_gazebo)/launch/wifibot/wifibot_control.launch">
+    <arg name="robot_name" value="taz01"/>
+    <arg name="liste_robots" default="$(arg liste_robots)" />
+    <arg name="command_use_gt" value="$(arg command_use_gt)" /> 
+    <arg name="use_controller" value="false" />
+    <arg name="use_planner" value="false" />
+  </include>
+  
+  <include file="$(find copernic_gazebo)/launch/drone/perception_light.launch" if="$(arg perception)">
+	<arg name="mav_name" default="taz01" />
+  </include>
+  
+  <include file="$(find copernic_launch)/launch/taz/taz_motion.launch">
+	<arg name="mav_name" default="taz01" />
+	<arg name="namespace" default="taz01" />
+  </include>
+  
+  <node pkg="tf2_ros" type="static_transform_publisher" ns="taz01" name="head_broadcaster" if="$(eval 'taz01' in arg('liste_robots') and arg('perception') is true)" args="0 0 0.4 0 0 0.0 taz01/base_link taz01/head"> <param name="capability_group" value="perception"/> </node>
+  <node pkg="tf2_ros" type="static_transform_publisher" ns="taz01" name="camera_broadcaster" if="$(eval 'taz01' in arg('liste_robots') and arg('perception') is true)" args="0 0 0 -0.5 0.5 -0.5 0.5 taz01/head taz01/cam0"> <param name="capability_group" value="perception"/> </node>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+  <param name="publish_frequency" type="double" value="30.0" />
+  </node>
+  
+</group>
+    
+</launch>

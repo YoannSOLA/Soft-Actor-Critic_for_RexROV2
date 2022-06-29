@@ -1,0 +1,186 @@
+
+Instructions pour utiliser les codes du package ROS "rl_control_uuv"
+
+Ces codes ont été développées dans le cadre de la thèse de Yoann SOLA intitulée : 
+Contributions to the development of Deep Reinforcement Learning-based controllers for AUV
+Le manuscrit de thèse a été diffusé librement et est facilement trouvable sur internet.
+
+Ne surtout pas hésiter à le contacter à l'adresse mail : yoann.sola@ensta-bretagne.org
+(Pour n'importe quelles questions sur l'installation des outils ou l'utilisation des codes)
+
+
+Plan de la documentation :
+
+- DEPENDANCES ET VERSIONS DES OUTILS UTILISES
+- UTILISATION DE MES CODES DE THESE
+	- PROCEDURE POUR LANCER LA SIMULATION ET LES CONTROLLEURS
+	- LES DIFFERENTES OPTIONS DE TRAINING ET DE TESTS
+	- DESCRIPTION DES METRIQUES APPARAISSANT DANS LE TERMINAL
+	- LES PARAMETRES A CONFIGURER ET AUTRES INFORMATIONS UTILES
+	
+
+------------------------------------------------------------------------------------------------------------------------------------------
+		DEPENDANCES ET VERSIONS DES OUTILS UTILISES
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+----   PACKAGES UBUNTU   ----
+
+- Version de Ubuntu : 18.04.3 LTS
+- Python : 2.7.17
+
+- ROS : melodic 1.14.3
+- Gazebo : 9.11.0
+
+- driver NVIDIA : 430.64
+- CUDA : version intallée sur l'ordi: 10.0.130
+- cudnn : libcudnn7 : 7.4.1.5-1+cuda10.0
+- TensorRT : tensorrt : 5.0.2-1+cuda10.0
+
+
+
+----   PACKAGES PYTHON   ----
+
+(ne pas hésiter à "freeze" certaines dépendances avec pip)
+
+- tensorflow-gpu : 1.14.0 (non utilisé par mes codes de thèse mais peut être utile à installer pour récupérer des implémentations codées en tensorflow)
+
+- Gym : 0.12.0  (ancienn version de OpenAI Gym, mais c'est la seule version compatible avec tout le reste)
+
+- Pytorch : torch 1.2.0+cu92
+- torchvision : 0.4.0+cu92 (non utilisé par mes codes de thèse mais peut être utile pour des applications de traitement d'image)
+
+Pytorch n'utilise pas CUDA 10.0 déjà installée sur Ubuntu, mais utilise la version 9.2.148
+Cette version de CUDA est installée en même temps que Pytorch avec l'instruction :
+pip install torch==1.2.0+cu92 torchvision==0.4.0+cu92 -f https://download.pytorch.org/whl/torch_stable.html
+
+Pour être sûr de la version utilisée par Pytorch, insérer les lignes suivantes dans son code :
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print("Is CUDA available :"+str(torch.cuda.is_available())+"\n")
+print(str(torch.version.cuda)+"\n")
+
+
+
+----   PACKAGES ROS   ----
+
+(le minmum pour faire tourner mes codes de thèse)
+
+- RexROV 2 : https://github.com/uuvsimulator/rexrov2
+- UUV Simulator : https://github.com/uuvsimulator/uuv_simulator
+- rl_control_uuv : codes de thèse de Yoann SOLA (= reinforcement learning control for UUV)
+
+  Dépendances du packages rl_control_uuv (dans le fichier package.xml):
+
+  <build_depend>gazebo_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>uuv_gazebo_ros_plugins_msgs</build_depend>
+  
+J'ai modifié certains fichiers de rexrov2 et de uuv_simulator, il est conseillé de prendre les versions des packages livrés avec rl_control_uuv.
+Pour le package rexrov2 j'ai désactivé certains capteurs dont je n'avais pas besoin, afin de réduire le temps de calcul (voir ci-dessous pour les réactiver)
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+		UTILISATION DE MES CODES DE THESE
+------------------------------------------------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------
+	PROCEDURE POUR LANCER LA SIMULATION ET LES CONTROLLEURS
+---------------------------------------------------------------------------
+
+Dans l'ordre  + attendre pour être sûr :
+roslaunch uuv_gazebo_worlds ocean_waves.launch (ou un autre environnement)
+roslaunch rexrov2_description upload_rexrov2.launch 
+roslaunch rl_control_uuv launch_SAC_multiStage_rexrov2.launch
+
+
+
+~/catkin_ws/src/rl_control_uuv/launch
+
+launch_SAC_multiStage_rexrov2.launch
+
+~/catkin_ws/src/rl_control_uuv/scripts
+
+envRexRov.py
+mainRexRov.py
+models.py
+multiStageRespawn.py
+
+~/catkin_ws/src/rexrov2
+~/catkin_ws/src/uuv_simulator
+
+---------------------------------------------------------------------------
+	LES DIFFERENTES OPTIONS DE TRAINING ET DE TESTS
+---------------------------------------------------------------------------
+
+en training
+en training à partir d'exemple PID : 50%, 100%
+bootstrap PID puis switch normal
+
+en test tout seul (courant)
+en test comparaison avec PID
+
+---------------------------------------------------------------------------
+	DESCRIPTION DES METRIQUES APPARAISSANT DANS LE TERMINAL
+---------------------------------------------------------------------------
+
+Dans le terminal dans lequel on a lancé la commande roslaunch rl_control_uuv launch_SAC_multiStage_rexrov2.launch
+
+---------------------------------------------------------------------------
+	LES PARAMETRES A CONFIGURER ET AUTRES INFORMATIONS UTILES
+---------------------------------------------------------------------------
+
+----   EMPLACEMENTS DES CONTROLEURS ET ENVIRONNEMENT   ----
+
+endroits où trouver les controllers custom
+endroits où trouver les environnements
+
+save tous k time steps (le modifier)
+
+supprimer/remettre des capteurs sur le rexrov2
+
+load model
+poids fixe
+
+nombre de time steps (pas plus de 1000) et episodes
+
+endroits où les model sont save/load, stats.txt et les logs de missions
+
+format des logs + fichiers matlab
+
+valeurs timeout et collision
+
+valeurs reward
+
+valeurs soft tau (soft update)
+
+activer batch norm ou non
+
+où est définit le bruit et les ciurants
+
+position de départ
+
+changer valeur PID max thrust (soft PID)
+
+changer distance
+
+changer taille vecteur d'état
+
+changer temps réel VS multiplier
+
+enlever l'affichage de gazebo quand on est connecté à distance en vpn ou qu'on veut gagner du temps de calcul
+
+changer courants, bruits capteurs actionneurs
+
+changer les stats qui apparaissent
+
+
+
